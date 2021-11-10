@@ -1,16 +1,24 @@
 #include "MyStrategy.hpp"
+
+#include "ModelServices/EntityManager.hpp"
+
+#include <cstdlib>
 #include <exception>
+#include <iostream>
 
 MyStrategy::MyStrategy() {}
 
 Action MyStrategy::getAction(const PlayerView& playerView, DebugInterface* debugInterface)
 {
     Action result;
-    int myId = playerView.myId;
+    const auto enemyID = playerView.players.at(0).id != playerView.myId ? playerView.players.at(0).id
+                                                                        : playerView.players.at(1).id;
+    
+    EntityManager entityManager{playerView};
     
     for (const auto& entity : playerView.entities)
     {
-        if (entity.playerId == nullptr || *entity.playerId != myId)
+        if (entity.playerId == nullptr || *entity.playerId != playerView.myId)
         {
             continue;
         }
@@ -19,6 +27,7 @@ Action MyStrategy::getAction(const PlayerView& playerView, DebugInterface* debug
 
         std::shared_ptr<MoveAction> moveAction = nullptr;
         std::shared_ptr<BuildAction> buildAction = nullptr;
+        std::shared_ptr<AttackAction> attackAction = nullptr;
         
         if (properties.canMove)
         {
@@ -30,23 +39,15 @@ Action MyStrategy::getAction(const PlayerView& playerView, DebugInterface* debug
         }
         else if (properties.build != nullptr)
         {
-            auto entityType = properties.build->options[0];
-            
-            size_t currentUnits = 0;
-            for (const auto& entity : playerView.entities)
-            {
-                if (entity.playerId != nullptr && *entity.playerId == myId && entity.entityType == entityType)
-                {
-                    ++currentUnits;
-                }
-            }
-            
-            const auto& populationUse = playerView.entityProperties.at(entityType).populationUse;
-            if ((currentUnits + 1) * populationUse <= properties.populationProvide)
+            auto entityTypeToBuild = properties.build->options[0];
+            auto currentUnitsCount = entityManager.getEntities({playerView.myId, entityTypeToBuild}).size();
+
+            const auto& populationUse = playerView.entityProperties.at(entityTypeToBuild).populationUse;
+            if (entity.entityType != MELEE_BASE && ((currentUnitsCount + 1) * populationUse <= properties.populationProvide))
             {
                 Vec2Int position{entity.position.x + properties.size, entity.position.y + properties.size - 1};
-                
-                buildAction = std::make_shared<BuildAction>(entityType, std::move(position));
+
+                buildAction = std::make_shared<BuildAction>(entityTypeToBuild, std::move(position));
             }
         }
         
@@ -57,9 +58,9 @@ Action MyStrategy::getAction(const PlayerView& playerView, DebugInterface* debug
         }
         
         auto autoAttackAction = std::make_shared<AutoAttack>(properties.sightRange, validAutoAttackTargets);
-        auto attackAction = std::make_shared<AttackAction>(nullptr, std::move(autoAttackAction));
+        attackAction = std::make_shared<AttackAction>(nullptr, std::move(autoAttackAction));
         
-        result.entityActions[entity.id] = EntityAction(moveAction, buildAction, attackAction, nullptr);
+        result.entityActions[entity.id] = EntityAction(std::move(moveAction), std::move(buildAction), std::move(attackAction), nullptr);
     }
     
     return result;
