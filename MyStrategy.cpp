@@ -1,5 +1,6 @@
 #include "MyStrategy.hpp"
 
+#include "model/MapRange.hpp"
 #include "ModelServices/EntityManager.hpp"
 
 #include <cstdlib>
