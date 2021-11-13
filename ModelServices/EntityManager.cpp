@@ -9,7 +9,7 @@ std::size_t EntityKeyHasher::operator()(const EntityKey key) const
 {
     std::size_t seed = 0;
     seed ^= std::hash<int>{}(key.entityType) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-    seed ^= std::hash<int>{}(key.playerID) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+    seed ^= std::hash<std::optional<int>>{}(key.playerID) + 0x9e3779b9 + (seed<<6) + (seed>>2);
     return seed;
 }
 
@@ -18,12 +18,9 @@ EntityManager::EntityManager(const PlayerView& playerView)
     auto index = 0u;
     for (const auto& entity : playerView.entities)
     {
-        if (entity.playerId == nullptr)
-        {
-            continue;
-        }
+        const auto playerID = entity.playerId == nullptr ? std::nullopt : std::optional<int>(*entity.playerId);
         
-        EntityKey key{*entity.playerId, entity.entityType};
+        EntityKey key{playerID, entity.entityType};
         _entities[key].push_back(index);
         
         ++index;

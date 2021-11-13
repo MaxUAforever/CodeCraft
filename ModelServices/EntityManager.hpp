@@ -5,6 +5,7 @@
 #include "../model/EntityType.hpp"
 #include "../model/PlayerView.hpp"
 
+#include <optional>
 #include <unordered_map>
 #include <vector>
 
@@ -13,7 +14,7 @@ using EntityIndex = int;
 
 struct EntityKey
 {
-    PlayerID playerID;
+    std::optional<PlayerID> playerID;
     EntityType entityType;
     
     bool operator==(const EntityKey& other) const;
