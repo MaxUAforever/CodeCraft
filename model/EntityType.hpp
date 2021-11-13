@@ -4,7 +4,9 @@
 #include "../Stream.hpp"
 
 enum EntityType {
-    WALL = 0,
+    EnumFirst = 0,
+    
+    WALL = EnumFirst,
     HOUSE = 1,
     BUILDER_BASE = 2,
     BUILDER_UNIT = 3,
@@ -13,7 +15,9 @@ enum EntityType {
     RANGED_BASE = 6,
     RANGED_UNIT = 7,
     RESOURCE = 8,
-    TURRET = 9
+    TURRET = 9,
+    
+    EnumLast = TURRET
 };
 
 #endif

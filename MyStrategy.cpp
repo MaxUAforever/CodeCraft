@@ -2,10 +2,20 @@
 
 #include "model/MapRange.hpp"
 #include "ModelServices/EntityManager.hpp"
+#include "ModelServices/Strategies/UnitStategyFactory.hpp"
+
+#include "Utils/EnumUtils.hpp"
 
 #include <cstdlib>
 #include <exception>
 #include <iostream>
+
+namespace
+{
+constexpr auto UnitEntityTypes = Utils::makeFlagForEnum(BUILDER_UNIT) |
+                                 Utils::makeFlagForEnum(MELEE_UNIT) |
+                                 Utils::makeFlagForEnum(RANGED_UNIT);
+} // namespace
 
 MyStrategy::MyStrategy() {}
 
@@ -16,7 +26,7 @@ Action MyStrategy::getAction(const PlayerView& playerView, DebugInterface* debug
                                                                         : playerView.players.at(1).id;
     
     EntityManager entityManager{playerView};
-    
+
     for (const auto& entity : playerView.entities)
     {
         if (entity.playerId == nullptr || *entity.playerId != playerView.myId)
@@ -26,42 +36,34 @@ Action MyStrategy::getAction(const PlayerView& playerView, DebugInterface* debug
         
         const auto& properties = playerView.entityProperties.at(entity.entityType);
 
-        std::shared_ptr<MoveAction> moveAction = nullptr;
-        std::shared_ptr<BuildAction> buildAction = nullptr;
-        std::shared_ptr<AttackAction> attackAction = nullptr;
-        
-        if (properties.canMove)
+        if (Utils::hasFlags(UnitEntityTypes, Utils::makeFlagForEnum(entity.entityType)))
         {
-            Vec2Int target{playerView.mapSize - 1, playerView.mapSize - 1};
-            const auto findClosestPosition = true;
-            const auto breakThrough = true;
+            const auto unitStrategy = UnitStrategyFactory::create(playerView, entityManager, entity);
             
-            moveAction = std::make_shared<MoveAction>(std::move(target), findClosestPosition, breakThrough);
+            result.entityActions[entity.id] = EntityAction{unitStrategy->generateMoveAction(),
+                                                           unitStrategy->generateBuildAction(),
+                                                           unitStrategy->generateAttackAction(),
+                                                           nullptr};
         }
         else if (properties.build != nullptr)
         {
+            if (entity.entityType == MELEE_BASE)
+            {
+                continue;
+            }
+            
             auto entityTypeToBuild = properties.build->options[0];
             auto currentUnitsCount = entityManager.getEntities({playerView.myId, entityTypeToBuild}).size();
 
             const auto& populationUse = playerView.entityProperties.at(entityTypeToBuild).populationUse;
-            if (entity.entityType != MELEE_BASE && ((currentUnitsCount + 1) * populationUse <= properties.populationProvide))
+            if ((currentUnitsCount + 1) * populationUse <= properties.populationProvide)
             {
                 Vec2Int position{entity.position.x + properties.size, entity.position.y + properties.size - 1};
 
-                buildAction = std::make_shared<BuildAction>(entityTypeToBuild, std::move(position));
+                auto buildAction = std::make_unique<BuildAction>(entityTypeToBuild, std::move(position));
+                result.entityActions[entity.id] = EntityAction(nullptr, std::move(buildAction), nullptr, nullptr);
             }
         }
-        
-        std::vector<EntityType> validAutoAttackTargets;
-        if (entity.entityType == BUILDER_UNIT)
-        {
-            validAutoAttackTargets.push_back(RESOURCE);
-        }
-        
-        auto autoAttackAction = std::make_shared<AutoAttack>(properties.sightRange, validAutoAttackTargets);
-        attackAction = std::make_shared<AttackAction>(nullptr, std::move(autoAttackAction));
-        
-        result.entityActions[entity.id] = EntityAction(std::move(moveAction), std::move(buildAction), std::move(attackAction), nullptr);
     }
     
     return result;
