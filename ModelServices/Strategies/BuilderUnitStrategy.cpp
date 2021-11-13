@@ -57,7 +57,11 @@ std::unique_ptr<MoveAction> BuilderUnitStrategy::generateMoveAction() const
         target.y += _unit.position.y - enemyUnit.position.y;
     }
     
-    // TODO: check is target empty or not. If not - maybe try to multiply vector.
+    const MapRange mapRange{0, 0, _playerView.mapSize, _playerView.mapSize};
+    if (!mapRange.contains(target))
+    {
+        target = {0, 0};
+    }
     
     return std::make_unique<MoveAction>(std::move(target), true, false);
 }
