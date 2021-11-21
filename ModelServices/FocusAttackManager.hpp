@@ -12,7 +12,7 @@
 
 struct AttackInfo
 {
-    size_t alliesInEnemyRange = 0u;
+    std::vector<EntityIndex> alliesInEnemyRange;
     size_t potentialDamage = 0u;
 };
 
@@ -21,8 +21,11 @@ class FocusAttackManager : public IAttackActionObserver
 public:
     FocusAttackManager(const PlayerView& playerView, const EntityManager& entityManager);
     
+    std::vector<EntityIndex> getEnemyFocusAllies(const EntityIndex enemyIndex) const;
     std::optional<EntityID> calculateEnemyToAttack(const Entity& entity) const;
     
+    
+public:
     void onAttackActionGenerated(const EntityIndex entityIndex, const EntityIndex enemyIndex) override;
     
 private:

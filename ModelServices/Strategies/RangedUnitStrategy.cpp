@@ -1,17 +1,43 @@
 #include "RangedUnitStrategy.hpp"
 
+#include "../EntityDetector.hpp"
+
 RangedUnitStrategy::RangedUnitStrategy(const EntityIndex unitIndex,
                                        const PlayerView& playerView,
+                                       const EntityManager& entityManager,
                                        const FocusAttackManager& focusAttackManager,
                                        AttackActionObserversList&& attackObservers)
     : _unitIndex{unitIndex}
     , _playerView{playerView}
+    , _entityManager{entityManager}
     , _focusAttackManager{focusAttackManager}
     , _attackObservers{std::move(attackObservers)}
-{}
+{
+    const EntityDetector entityDetector{_playerView, _entityManager};
+    const auto unit = _playerView.entities.at(_unitIndex);
+    const auto enemyID = _playerView.players.at(0).id != _playerView.myId ? _playerView.players.at(0).id
+                                                                          : _playerView.players.at(1).id;
+    
+    const auto enemies = entityDetector.getOnDistanse(unit.position, 0, 7, enemyID, {RANGED_UNIT, MELEE_UNIT});
+    auto allies = entityDetector.getOnDistanse(unit.position, 0, 1, _playerView.myId, {RANGED_UNIT, MELEE_UNIT});
+    
+    // Add allies, that already attack enemy.
+    for (const auto& enemyIndex : enemies)
+    {
+        auto atackingAllies = _focusAttackManager.getEnemyFocusAllies(enemyIndex);
+        allies.insert(std::make_move_iterator(atackingAllies.begin()), std::make_move_iterator(atackingAllies.end()));
+    }
+    
+    _isInDanger = allies.size() < enemies.size();
+}
 
 std::unique_ptr<AttackAction> RangedUnitStrategy::generateAttackAction() const
 {
+    if (_isInDanger)
+    {
+        return nullptr;
+    }
+    
     const auto target = _focusAttackManager.calculateEnemyToAttack(_playerView.entities.at(_unitIndex));
     if (!target)
     {
@@ -25,14 +51,8 @@ std::unique_ptr<AttackAction> RangedUnitStrategy::generateAttackAction() const
 
 std::unique_ptr<MoveAction> RangedUnitStrategy::generateMoveAction() const
 {
-    // TODO: check function call is needed or not.
-    const auto attackTarget = _focusAttackManager.calculateEnemyToAttack(_playerView.entities.at(_unitIndex));
-    if (attackTarget)
-    {
-        return nullptr;
-    }
+    auto target = _isInDanger ? Vec2Int{0, 0} : Vec2Int{_playerView.mapSize - 1, _playerView.mapSize - 1};
     
-    Vec2Int target{_playerView.mapSize - 1, _playerView.mapSize - 1};
     const auto findClosestPosition = true;
     const auto breakThrough = true;
     

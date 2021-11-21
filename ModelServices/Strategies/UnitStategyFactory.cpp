@@ -22,7 +22,11 @@ std::unique_ptr<IUnitStrategy> UnitStrategyFactory::create(const EntityIndex uni
         case EntityType::MELEE_UNIT:
             return std::make_unique<MeleeUnitStrategy>(unit, playerView);
         case EntityType::RANGED_UNIT:
-            return std::make_unique<RangedUnitStrategy>(unitIndex, playerView, focusAttackManager, std::move(attackObservers));
+            return std::make_unique<RangedUnitStrategy>(unitIndex,
+                                                        playerView,
+                                                        entityManager,
+                                                        focusAttackManager,
+                                                        std::move(attackObservers));
         default:
             return nullptr;
     }

@@ -18,28 +18,6 @@ size_t getUnitTypeAttackPriority(const EntityType entityType)
     
     return priorityIt->second;
 }
-
-std::unordered_set<EntityIndex> getEnemiesInEntityRange(const PlayerView& playerView,
-                                                        const EntityManager& entityManager,
-                                                        const EntityIndex unitIndex)
-{
-    if (unitIndex >= playerView.entities.size())
-    {
-        return {};
-    }
- 
-    const EntityDetector entityDetector{playerView, entityManager};
-    const auto enemyID = playerView.players.at(0).id != playerView.myId ? playerView.players.at(0).id
-                                                                        : playerView.players.at(1).id;
-    
-    const auto& properties = playerView.entityProperties.at(RANGED_UNIT);
-    const auto attackRange = static_cast<size_t>(properties.attack->attackRange);
-    
-    const auto& unit = playerView.entities[unitIndex];
-    const MapRange unitRange{playerView, unit.position, attackRange};
-    
-    return entityDetector.getOnDistanse(unit.position, 0, attackRange + 1, enemyID, {BUILDER_UNIT, MELEE_UNIT, RANGED_UNIT});
-}
 } // namespace
 
 FocusAttackManager::FocusAttackManager(const PlayerView& playerView, const EntityManager& entityManager)
@@ -47,29 +25,42 @@ FocusAttackManager::FocusAttackManager(const PlayerView& playerView, const Entit
 {
     const auto rangedUnits = entityManager.getEntities({playerView.myId, RANGED_UNIT});
     
+    const EntityDetector entityDetector{playerView, entityManager};
     for (const auto unitIndex : rangedUnits)
     {
-        auto enemies = getEnemiesInEntityRange(playerView, entityManager, unitIndex);
+        auto enemies = entityDetector.getEnemiesInEntityRange(unitIndex, {BUILDER_UNIT, MELEE_UNIT, RANGED_UNIT});
         
         for (const auto enemyIndex : enemies)
         {
             auto enemyIt = _enemyAttackInfo.find(enemyIndex);
             if (enemyIt == _enemyAttackInfo.end())
             {
-                _enemyAttackInfo.emplace(enemyIndex, AttackInfo{1, 0});
+                _enemyAttackInfo.emplace(enemyIndex, AttackInfo{{unitIndex}, 0});
             }
             else
             {
                 auto& unitAttackInfo = enemyIt->second;
-                ++unitAttackInfo.alliesInEnemyRange;
+                unitAttackInfo.alliesInEnemyRange.push_back(unitIndex);
             }
         }
         
         const auto& unit = playerView.entities[unitIndex];
         auto& enemiesInEntityRange = _enemiesInEntityRange[unit.id];
-        enemiesInEntityRange.insert(enemiesInEntityRange.end(), std::make_move_iterator(enemies.begin()),
-                                              std::make_move_iterator(enemies.end()));
+        enemiesInEntityRange.insert(enemiesInEntityRange.end(),
+                                    std::make_move_iterator(enemies.begin()),
+                                    std::make_move_iterator(enemies.end()));
     }
+}
+
+std::vector<EntityIndex> FocusAttackManager::getEnemyFocusAllies(const EntityIndex enemyIndex) const
+{
+    const auto enemyAttackInfoIt = _enemyAttackInfo.find(enemyIndex);
+    if (enemyAttackInfoIt == _enemyAttackInfo.cend())
+    {
+        return {};
+    }
+    
+    return enemyAttackInfoIt->second.alliesInEnemyRange;
 }
 
 std::optional<EntityID> FocusAttackManager::calculateEnemyToAttack(const Entity& entity) const
@@ -126,8 +117,8 @@ std::optional<EntityID> FocusAttackManager::calculateEnemyToAttack(const Entity&
             continue;
         }
         
-        const auto currentTargetPotentialDamage = _enemyAttackInfo.at(*resultIndex).alliesInEnemyRange * unitDamage;
-        const auto newTargetPotentialDamage = _enemyAttackInfo.at(enemyIndex).alliesInEnemyRange * unitDamage;
+        const auto currentTargetPotentialDamage = _enemyAttackInfo.at(*resultIndex).alliesInEnemyRange.size() * unitDamage;
+        const auto newTargetPotentialDamage = _enemyAttackInfo.at(enemyIndex).alliesInEnemyRange.size() * unitDamage;
         
         const auto canBeCurrentTargetKilled = currentTargetPotentialDamage >= resultEntity->health;
         const auto canBeNewTargetKilled = currentTargetPotentialDamage >= resultEntity->health;

@@ -14,6 +14,7 @@ class RangedUnitStrategy : public IUnitStrategy
 public:
     RangedUnitStrategy(const EntityIndex unitIndex,
                        const PlayerView& playerView,
+                       const EntityManager& entityManager,
                        const FocusAttackManager& focusAttackManager,
                        AttackActionObserversList&& attackObservers);
     
@@ -26,9 +27,11 @@ private:
     
 private:
     const PlayerView& _playerView;
+    const EntityManager& _entityManager;
     const FocusAttackManager& _focusAttackManager;
 
     EntityIndex _unitIndex;
+    bool _isInDanger;
     
     AttackActionObserversList _attackObservers;
 };

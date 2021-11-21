@@ -73,3 +73,21 @@ std::unordered_set<EntityIndex> EntityDetector::getOnDistanse(const Vec2Int& poi
     
     return result;
 }
+
+std::unordered_set<EntityIndex> EntityDetector::getEnemiesInEntityRange(const EntityIndex unitIndex,
+                                                                        const std::vector<EntityType> enemiesTypes) const
+{
+    if (unitIndex >= _playerView.entities.size())
+    {
+        return {};
+    }
+ 
+    const auto enemyID = _playerView.players.at(0).id != _playerView.myId ? _playerView.players.at(0).id
+                                                                          : _playerView.players.at(1).id;
+    
+    const auto& unit = _playerView.entities[unitIndex];
+    const auto& properties = _playerView.entityProperties.at(unit.entityType);
+    const auto attackRange = static_cast<size_t>(properties.attack->attackRange);
+    
+    return getOnDistanse(unit.position, 0, attackRange + 1, enemyID, enemiesTypes);
+}

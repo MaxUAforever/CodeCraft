@@ -25,6 +25,9 @@ public:
                                                   const size_t toDistance,
                                                   const std::optional<int> playerID,
                                                   const std::vector<EntityType> entityTypes) const;
+    
+    std::unordered_set<EntityIndex> getEnemiesInEntityRange(const EntityIndex unitIndex,
+                                                            const std::vector<EntityType> enemiesTypes) const;
         
 private:
     const PlayerView& _playerView;
