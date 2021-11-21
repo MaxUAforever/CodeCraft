@@ -2,8 +2,8 @@
 
 #include "model/MapRange.hpp"
 #include "ModelServices/EntityManager.hpp"
+#include "ModelServices/FocusAttackManager.hpp"
 #include "ModelServices/Strategies/UnitStategyFactory.hpp"
-
 #include "Utils/EnumUtils.hpp"
 
 #include <cstdlib>
@@ -26,9 +26,12 @@ Action MyStrategy::getAction(const PlayerView& playerView, DebugInterface* debug
                                                                         : playerView.players.at(1).id;
     
     EntityManager entityManager{playerView};
-
-    for (const auto& entity : playerView.entities)
+    FocusAttackManager focusAttackManager{playerView, entityManager};
+    
+    for (auto entityIndex = 0u; entityIndex < playerView.entities.size(); ++entityIndex)
     {
+        const auto& entity = playerView.entities[entityIndex];
+        
         if (entity.playerId == nullptr || *entity.playerId != playerView.myId)
         {
             continue;
@@ -38,7 +41,7 @@ Action MyStrategy::getAction(const PlayerView& playerView, DebugInterface* debug
 
         if (Utils::hasFlags(UnitEntityTypes, Utils::makeFlagForEnum(entity.entityType)))
         {
-            const auto unitStrategy = UnitStrategyFactory::create(playerView, entityManager, entity);
+            const auto unitStrategy = UnitStrategyFactory::create(entityIndex, playerView, entityManager, focusAttackManager, {&focusAttackManager});
             
             result.entityActions[entity.id] = EntityAction{unitStrategy->generateMoveAction(),
                                                            unitStrategy->generateBuildAction(),

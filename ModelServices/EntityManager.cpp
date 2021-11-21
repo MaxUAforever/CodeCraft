@@ -37,3 +37,22 @@ std::vector<EntityIndex> EntityManager::getEntities(const EntityKey entityKey) c
     
     return entitiesIt->second;
 }
+
+std::vector<EntityIndex> EntityManager::getEntities(const std::vector<EntityKey>& entityKeys) const
+{
+    std::vector<EntityIndex> result;
+    
+    for (const auto& entityKey : entityKeys)
+    {
+        const auto entitiesIt = _entities.find(entityKey);
+        if (entitiesIt == _entities.cend())
+        {
+            return {};
+        }
+        
+        const auto& entities = entitiesIt->second;
+        result.insert(result.end(), entities.cbegin(), entities.cend());
+    }
+    
+    return result;
+}

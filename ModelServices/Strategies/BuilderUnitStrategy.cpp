@@ -16,9 +16,9 @@ BuilderUnitStrategy::BuilderUnitStrategy(const Entity& unit, const PlayerView& p
     auto rangedUnitsNearby = entityDetector.getInRange(longRange, enemyID, {RANGED_UNIT});
     auto meleeUnitsNearby = entityDetector.getInRange(smallRange, enemyID, {MELEE_UNIT});
     
-    _enemyUnits.assign(std::make_move_iterator(rangedUnitsNearby.begin()),
+    _enemyUnits.insert(_enemyUnits.end(), std::make_move_iterator(rangedUnitsNearby.begin()),
                        std::make_move_iterator(rangedUnitsNearby.end()));
-    _enemyUnits.assign(std::make_move_iterator(meleeUnitsNearby.begin()),
+    _enemyUnits.insert(_enemyUnits.end(), std::make_move_iterator(meleeUnitsNearby.begin()),
                        std::make_move_iterator(meleeUnitsNearby.end()));
 }
 

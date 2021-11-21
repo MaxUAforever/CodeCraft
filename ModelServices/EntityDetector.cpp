@@ -14,7 +14,8 @@ std::unordered_set<EntityIndex> EntityDetector::getInRange(const MapRange& range
     for (auto entityType : entityTypes)
     {
         auto foundedEntites = _entityManager.getEntities({playerID, entityType});
-        entitiesIndexes.assign(std::make_move_iterator(foundedEntites.begin()),
+        entitiesIndexes.insert(entitiesIndexes.end(),
+                               std::make_move_iterator(foundedEntites.begin()),
                                std::make_move_iterator(foundedEntites.end()));
     }
     
@@ -42,16 +43,29 @@ std::unordered_set<EntityIndex> EntityDetector::getOnDistanse(const Vec2Int& poi
                                                               const std::optional<int> playerID,
                                                               const std::vector<EntityType> entityTypes) const
 {
-    const MapRange outerRange{_playerView, point, toDistance};
-    const MapRange innerRange{_playerView, point, fromDistance ? fromDistance - 1 : 0};
-    
-    const auto outerEntities = getInRange(outerRange, playerID, entityTypes);
-    const auto innerEntities = getInRange(innerRange, playerID, entityTypes);
+    std::vector<EntityIndex> entitiesIndexes;
+    for (auto entityType : entityTypes)
+    {
+        auto foundedEntites = _entityManager.getEntities({playerID, entityType});
+        entitiesIndexes.insert(entitiesIndexes.end(),
+                               std::make_move_iterator(foundedEntites.begin()),
+                               std::make_move_iterator(foundedEntites.end()));
+    }
     
     std::unordered_set<EntityIndex> result;
-    for (auto unitIndex : outerEntities)
+    for (auto unitIndex : entitiesIndexes)
     {
-        if (!innerEntities.contains(unitIndex))
+        if (unitIndex >= _playerView.entities.size())
+        {
+            continue;
+        }
+        
+        const auto& unit = _playerView.entities[unitIndex];
+        const auto distanceX = std::abs(point.x - unit.position.x);
+        const auto distanceY = std::abs(point.y - unit.position.y);
+        const auto actualDistance = distanceX + distanceY;
+        
+        if (actualDistance >= fromDistance && actualDistance <= toDistance)
         {
             result.emplace(unitIndex);
         }

@@ -3,8 +3,6 @@
 
 #include "IUnitStrategy.hpp"
 
-#include "../EntityManager.hpp"
-
 #include "../../model/Model.hpp"
 
 class MeleeUnitStrategy : public IUnitStrategy
@@ -18,7 +16,7 @@ public:
     
 private:
     const Entity& _unit;
-    const PlayerView _playerView;
+    const PlayerView& _playerView;
 };
 
 #endif /* MeleeUnitStrategy_hpp */

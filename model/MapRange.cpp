@@ -8,10 +8,10 @@ MapRange::MapRange(int beginX, int beginY, int endX, int endY)
 {}
 
 MapRange::MapRange(const PlayerView& playerView, const Vec2Int point, const size_t distance)
-    : _beginX(std::max((int)(point.x - distance), 0))
-    , _beginY(std::max((int)(point.y - distance), 0))
-    , _endX(std::min(static_cast<int>(point.x + distance), playerView.mapSize))
-    , _endY(std::min(static_cast<int>(point.y + distance), playerView.mapSize))
+    : _beginX(std::max(static_cast<int>(point.x - distance), 0))
+    , _beginY(std::max(static_cast<int>(point.y - distance), 0))
+    , _endX(std::min(static_cast<int>(point.x + distance + 1), playerView.mapSize))
+    , _endY(std::min(static_cast<int>(point.y + distance + 1), playerView.mapSize))
 {}
 
 bool MapRange::contains(const int x, const int y) const
