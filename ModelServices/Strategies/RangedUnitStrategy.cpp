@@ -18,8 +18,20 @@ RangedUnitStrategy::RangedUnitStrategy(const EntityIndex unitIndex,
     const auto enemyID = _playerView.players.at(0).id != _playerView.myId ? _playerView.players.at(0).id
                                                                           : _playerView.players.at(1).id;
     
-    const auto enemies = entityDetector.getOnDistanse(unit.position, 0, 7, enemyID, {RANGED_UNIT, MELEE_UNIT});
-    auto allies = entityDetector.getOnDistanse(unit.position, 0, 1, _playerView.myId, {RANGED_UNIT, MELEE_UNIT});
+    auto rangedEnemies = entityDetector.getOnDistanse(unit.position, 0, 7, enemyID, {RANGED_UNIT});
+    auto meleeEnemies = entityDetector.getOnDistanse(unit.position, 0, 2, enemyID, {MELEE_UNIT});
+
+    std::vector<EntityIndex> enemies;
+
+    enemies.insert(enemies.end(),
+                   std::make_move_iterator(rangedEnemies.begin()),
+                   std::make_move_iterator(rangedEnemies.end()));
+    
+    enemies.insert(enemies.end(),
+                   std::make_move_iterator(meleeEnemies.begin()),
+                   std::make_move_iterator(meleeEnemies.end()));
+    
+    auto allies = entityDetector.getOnDistanse(unit.position, 0, 3, _playerView.myId, {RANGED_UNIT, MELEE_UNIT});
     
     // Add allies, that already attack enemy.
     for (const auto& enemyIndex : enemies)
@@ -51,7 +63,15 @@ std::unique_ptr<AttackAction> RangedUnitStrategy::generateAttackAction() const
 
 std::unique_ptr<MoveAction> RangedUnitStrategy::generateMoveAction() const
 {
-    auto target = _isInDanger ? Vec2Int{0, 0} : Vec2Int{_playerView.mapSize - 1, _playerView.mapSize - 1};
+    Vec2Int target;
+    if (_isInDanger)
+    {
+        target = {0, 0};
+    }
+    else
+    {
+        target = Vec2Int{_playerView.mapSize - 1, _playerView.mapSize - 1};
+    }
     
     const auto findClosestPosition = true;
     const auto breakThrough = true;

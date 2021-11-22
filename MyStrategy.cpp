@@ -55,6 +55,18 @@ Action MyStrategy::getAction(const PlayerView& playerView, DebugInterface* debug
                 continue;
             }
             
+            if (entity.entityType == BUILDER_BASE)
+            {
+                const auto alliasBuildersCount = entityManager.getEntities({playerView.myId, BUILDER_UNIT}).size();
+                const auto enemyBuildersCount = entityManager.getEntities({enemyID, BUILDER_UNIT}).size();
+                
+                if (alliasBuildersCount > enemyBuildersCount)
+                {
+                    result.entityActions[entity.id] = EntityAction(nullptr, nullptr, nullptr, nullptr);
+                    continue;
+                }
+            }
+            
             auto entityTypeToBuild = properties.build->options[0];
             auto currentUnitsCount = entityManager.getEntities({playerView.myId, entityTypeToBuild}).size();
 

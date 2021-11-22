@@ -29,10 +29,9 @@ std::unique_ptr<AttackAction> BuilderUnitStrategy::generateAttackAction() const
         return nullptr;
     }
     
-    const auto& properties = _playerView.entityProperties.at(BUILDER_UNIT);
     std::vector<EntityType> validAutoAttackTargets{RESOURCE};
 
-    auto autoAttackAction = std::make_shared<AutoAttack>(properties.sightRange, validAutoAttackTargets);
+    auto autoAttackAction = std::make_shared<AutoAttack>(_playerView.mapSize, validAutoAttackTargets);
     return std::make_unique<AttackAction>(nullptr, std::move(autoAttackAction));
 }
 
