@@ -8,6 +8,7 @@
 #include "../../model/Model.hpp"
 
 class EntityManager;
+class BuildingsManager;
 
 class UnitStrategyFactory
 {
@@ -16,6 +17,7 @@ public:
                                                  const PlayerView& playerView,
                                                  const EntityManager& entityManager,
                                                  const FocusAttackManager& focusAttackManager,
+                                                 const BuildingsManager& buildingsManager,
                                                  AttackActionObserversList&& attackObservers);
 };
 

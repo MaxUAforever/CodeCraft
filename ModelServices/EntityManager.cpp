@@ -47,7 +47,7 @@ std::vector<EntityIndex> EntityManager::getEntities(const std::vector<EntityKey>
         const auto entitiesIt = _entities.find(entityKey);
         if (entitiesIt == _entities.cend())
         {
-            return {};
+            continue;
         }
         
         const auto& entities = entitiesIt->second;

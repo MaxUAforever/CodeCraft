@@ -1,6 +1,7 @@
 #include "MyStrategy.hpp"
 
 #include "model/MapRange.hpp"
+#include "ModelServices/BuildingsManager.hpp"
 #include "ModelServices/EntityManager.hpp"
 #include "ModelServices/FocusAttackManager.hpp"
 #include "ModelServices/Strategies/UnitStategyFactory.hpp"
@@ -27,6 +28,7 @@ Action MyStrategy::getAction(const PlayerView& playerView, DebugInterface* debug
     
     EntityManager entityManager{playerView};
     FocusAttackManager focusAttackManager{playerView, entityManager};
+    BuildingsManager buildingsManager{playerView, entityManager};
     
     for (auto entityIndex = 0u; entityIndex < playerView.entities.size(); ++entityIndex)
     {
@@ -41,7 +43,12 @@ Action MyStrategy::getAction(const PlayerView& playerView, DebugInterface* debug
 
         if (Utils::hasFlags(UnitEntityTypes, Utils::makeFlagForEnum(entity.entityType)))
         {
-            const auto unitStrategy = UnitStrategyFactory::create(entityIndex, playerView, entityManager, focusAttackManager, {&focusAttackManager});
+            const auto unitStrategy = UnitStrategyFactory::create(entityIndex,
+                                                                  playerView,
+                                                                  entityManager,
+                                                                  focusAttackManager,
+                                                                  buildingsManager,
+                                                                  {&focusAttackManager});
             
             result.entityActions[entity.id] = EntityAction{unitStrategy->generateMoveAction(),
                                                            unitStrategy->generateBuildAction(),

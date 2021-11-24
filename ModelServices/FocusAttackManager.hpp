@@ -24,7 +24,6 @@ public:
     std::vector<EntityIndex> getEnemyFocusAllies(const EntityIndex enemyIndex) const;
     std::optional<EntityID> calculateEnemyToAttack(const Entity& entity) const;
     
-    
 public:
     void onAttackActionGenerated(const EntityIndex entityIndex, const EntityIndex enemyIndex) override;
     

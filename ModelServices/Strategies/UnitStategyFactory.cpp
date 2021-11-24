@@ -4,6 +4,7 @@
 #include "MeleeUnitStrategy.hpp"
 #include "RangedUnitStrategy.hpp"
 
+#include "../BuildingsManager.hpp"
 #include "../EntityManager.hpp"
 #include "../FocusAttackManager.hpp"
 
@@ -11,6 +12,7 @@ std::unique_ptr<IUnitStrategy> UnitStrategyFactory::create(const EntityIndex uni
                                                            const PlayerView& playerView,
                                                            const EntityManager& entityManager,
                                                            const FocusAttackManager& focusAttackManager,
+                                                           const BuildingsManager& buildingsManager,
                                                            AttackActionObserversList&& attackObservers)
 {
     const auto& unit = playerView.entities.at(unitIndex);
@@ -18,7 +20,7 @@ std::unique_ptr<IUnitStrategy> UnitStrategyFactory::create(const EntityIndex uni
     switch(unit.entityType)
     {
         case EntityType::BUILDER_UNIT:
-            return std::make_unique<BuilderUnitStrategy>(unit, playerView, entityManager);
+            return std::make_unique<BuilderUnitStrategy>(unitIndex, playerView, entityManager, buildingsManager);
         case EntityType::MELEE_UNIT:
             return std::make_unique<MeleeUnitStrategy>(unit, playerView);
         case EntityType::RANGED_UNIT:
