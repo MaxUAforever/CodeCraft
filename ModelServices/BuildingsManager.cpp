@@ -18,10 +18,20 @@ std::optional<EntityType> BuildingsManager::getTypeToBuild(const EntityIndex uni
     }
     
     const auto& unitBaseProperties = _playerView.entityProperties.at(RANGED_BASE);
-    auto currentUnitsCount = _entityManager.getEntities({_playerView.myId, RANGED_UNIT}).size();
+    auto currentUnitsCount = _entityManager.getEntities({{_playerView.myId, RANGED_UNIT},
+                                                         {_playerView.myId, BUILDER_UNIT},
+                                                         {_playerView.myId, MELEE_UNIT}}).size();
 
-    const auto populationUse = _playerView.entityProperties.at(RANGED_UNIT).populationUse;
-    if ((currentUnitsCount + 2) * populationUse >= unitBaseProperties.populationProvide)
+    auto currentBuildingsCount = _entityManager.getEntities({{_playerView.myId, BUILDER_BASE},
+                                                             {_playerView.myId, MELEE_BASE},
+                                                             {_playerView.myId, RANGED_BASE},
+                                                             {_playerView.myId, HOUSE}}).size();
+    
+    
+    const auto populationProvide = currentBuildingsCount * 5;
+    const auto populationUse = currentUnitsCount;
+    
+    if (populationUse + 1 >= populationProvide)
     {
         return HOUSE;
     }

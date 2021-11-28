@@ -8,6 +8,12 @@
 
 #include "../../model/Model.hpp"
 
+struct BuildInfo
+{
+    EntityType buildType;
+    Vec2Int buildPoint;
+};
+
 class BuilderUnitStrategy : public IUnitStrategy
 {
 public:
@@ -22,14 +28,17 @@ public:
     
 private:
     std::unordered_set<Vec2Int> getObstaclesMap(const MapRange& rangeForBuild) const;
-
+    
+    Vec2Int calcuateAvoidEnemiesPoint() const;
+    std::optional<Vec2Int> calculateBuildPoint(const EntityType typeToBuild) const;
+    
 private:
     const PlayerView& _playerView;
     const EntityManager& _entityManager;
-    const BuildingsManager& _buildingsManager;
     
     const EntityIndex _unitIndex;
     std::vector<EntityIndex> _enemyUnits;
+    std::optional<BuildInfo> _buildInfo;
 };
 
 #endif /* BuilderUnitStrategy_hpp */

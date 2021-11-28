@@ -70,7 +70,7 @@ std::unique_ptr<MoveAction> RangedUnitStrategy::generateMoveAction() const
     }
     else
     {
-        target = Vec2Int{_playerView.mapSize - 1, _playerView.mapSize - 1};
+        target = Vec2Int{30, 30};
     }
     
     const auto findClosestPosition = true;
