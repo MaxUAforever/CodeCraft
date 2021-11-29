@@ -26,3 +26,8 @@ std::unique_ptr<BuildAction> MeleeUnitStrategy::generateBuildAction() const
 {
     return nullptr;
 }
+
+std::unique_ptr<RepairAction> MeleeUnitStrategy::generateRepairAction() const
+{
+    return nullptr;
+}

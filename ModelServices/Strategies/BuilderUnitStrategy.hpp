@@ -25,12 +25,14 @@ public:
     std::unique_ptr<AttackAction> generateAttackAction() const override;
     std::unique_ptr<BuildAction> generateBuildAction() const override;
     std::unique_ptr<MoveAction> generateMoveAction() const override;
+    std::unique_ptr<RepairAction> generateRepairAction() const override;
     
 private:
     std::unordered_set<Vec2Int> getObstaclesMap(const MapRange& rangeForBuild) const;
     
     Vec2Int calcuateAvoidEnemiesPoint() const;
     std::optional<Vec2Int> calculateBuildPoint(const EntityType typeToBuild) const;
+    std::optional<EntityIndex> getInactiveBuilding(const EntityType buildingType) const;
     
 private:
     const PlayerView& _playerView;

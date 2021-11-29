@@ -13,6 +13,7 @@ public:
     std::unique_ptr<AttackAction> generateAttackAction() const override;
     std::unique_ptr<BuildAction> generateBuildAction() const override;
     std::unique_ptr<MoveAction> generateMoveAction() const override;
+    std::unique_ptr<RepairAction> generateRepairAction() const override;
     
 private:
     const Entity& _unit;

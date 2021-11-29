@@ -9,6 +9,7 @@
 
 class EntityManager;
 class BuildingsManager;
+class SquadManager;
 
 class UnitStrategyFactory
 {
@@ -17,6 +18,7 @@ public:
                                                  const PlayerView& playerView,
                                                  const EntityManager& entityManager,
                                                  const FocusAttackManager& focusAttackManager,
+                                                 const SquadManager& squadManager,
                                                  const BuildingsManager& buildingsManager,
                                                  AttackActionObserversList&& attackObservers);
 };

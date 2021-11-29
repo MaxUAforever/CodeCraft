@@ -7,11 +7,13 @@
 #include "../BuildingsManager.hpp"
 #include "../EntityManager.hpp"
 #include "../FocusAttackManager.hpp"
+#include "../SquadManager.hpp"
 
 std::unique_ptr<IUnitStrategy> UnitStrategyFactory::create(const EntityIndex unitIndex,
                                                            const PlayerView& playerView,
                                                            const EntityManager& entityManager,
                                                            const FocusAttackManager& focusAttackManager,
+                                                           const SquadManager& squadManager,
                                                            const BuildingsManager& buildingsManager,
                                                            AttackActionObserversList&& attackObservers)
 {
@@ -28,6 +30,7 @@ std::unique_ptr<IUnitStrategy> UnitStrategyFactory::create(const EntityIndex uni
                                                         playerView,
                                                         entityManager,
                                                         focusAttackManager,
+                                                        squadManager,
                                                         std::move(attackObservers));
         default:
             return nullptr;

@@ -102,12 +102,29 @@ std::unique_ptr<BuildAction> BuilderUnitStrategy::generateBuildAction() const
         return nullptr;
     }
     
-    if (_buildInfo)
+    if (_buildInfo && !getInactiveBuilding(_buildInfo->buildType))
     {
         return std::make_unique<BuildAction>(_buildInfo->buildType, _buildInfo->buildPoint);
     }
     
     return nullptr;
+}
+
+std::unique_ptr<RepairAction> BuilderUnitStrategy::generateRepairAction() const
+{
+    if (!_enemyUnits.empty() || !_buildInfo)
+    {
+        return nullptr;
+    }
+    
+    const auto buildingIndex = getInactiveBuilding(_buildInfo->buildType);
+    if (!buildingIndex)
+    {
+        return nullptr;
+    }
+    
+    const auto& buildingEntity = _playerView.entities[*buildingIndex];
+    return std::make_unique<RepairAction>(buildingEntity.id);
 }
 
 std::unordered_set<Vec2Int> BuilderUnitStrategy::getObstaclesMap(const MapRange& rangeForBuild) const
@@ -173,7 +190,7 @@ Vec2Int BuilderUnitStrategy::calcuateAvoidEnemiesPoint() const
 
 std::optional<Vec2Int> BuilderUnitStrategy::calculateBuildPoint(const EntityType typeToBuild) const
 {
-    MapRange mapRangeForBuild{0, 0, 30, 30};
+    MapRange mapRangeForBuild{0, 0, 30, _playerView.mapSize};
     Vec2Int buildPoint{mapRangeForBuild.getBeginX(), mapRangeForBuild.getBeginY()};
     
     const auto& buildingProperties = _playerView.entityProperties.at(typeToBuild);
@@ -190,8 +207,8 @@ std::optional<Vec2Int> BuilderUnitStrategy::calculateBuildPoint(const EntityType
     {
         MapRange buildingRange{buildPoint.x,
                                buildPoint.y,
-                               buildPoint.x + buildingSize,
-                               buildPoint.y + buildingSize};
+                               buildPoint.x + buildingSize - 1,
+                               buildPoint.y + buildingSize - 1};
         
         if (buildingRange.getLastY() > mapRangeForBuild.getLastX())
         {
@@ -201,18 +218,33 @@ std::optional<Vec2Int> BuilderUnitStrategy::calculateBuildPoint(const EntityType
         
         if (buildingRange.getLastX() > mapRangeForBuild.getLastX())
         {
-            buildPoint = {buildPoint.x + buildingSize + 1, buildPoint.y};
+            buildPoint.y += buildingProperties.size + 1;
+            buildPoint.x = mapRangeForBuild.getBeginX();
+            
             continue;
         }
         
         if (!buildingRange.findIf(hasObstacles))
         {
-            const int buildingMiddle = (buildingSize / 2);
-            
             return Vec2Int{buildPoint.x, buildPoint.y};
         }
         
         buildPoint.x += buildingProperties.size + 1;
+    }
+    
+    return std::nullopt;
+}
+
+std::optional<EntityIndex> BuilderUnitStrategy::getInactiveBuilding(const EntityType buildingType) const
+{
+    const auto buildings = _entityManager.getEntities({_playerView.myId, buildingType});
+    for (auto buildingIndex : buildings)
+    {
+        const auto& buildingEntity = _playerView.entities[buildingIndex];
+        if (!buildingEntity.active)
+        {
+            return buildingIndex;
+        }
     }
     
     return std::nullopt;

@@ -13,6 +13,7 @@ public:
     virtual std::unique_ptr<AttackAction> generateAttackAction() const = 0;
     virtual std::unique_ptr<BuildAction> generateBuildAction() const = 0;
     virtual std::unique_ptr<MoveAction> generateMoveAction() const = 0;
+    virtual std::unique_ptr<RepairAction> generateRepairAction() const = 0;
 };
 
 #endif /* IUnitStrategy_hpp */

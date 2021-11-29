@@ -22,13 +22,21 @@ std::optional<EntityType> BuildingsManager::getTypeToBuild(const EntityIndex uni
                                                          {_playerView.myId, BUILDER_UNIT},
                                                          {_playerView.myId, MELEE_UNIT}}).size();
 
-    auto currentBuildingsCount = _entityManager.getEntities({{_playerView.myId, BUILDER_BASE},
-                                                             {_playerView.myId, MELEE_BASE},
-                                                             {_playerView.myId, RANGED_BASE},
-                                                             {_playerView.myId, HOUSE}}).size();
+    auto currentBuildings = _entityManager.getEntities({{_playerView.myId, BUILDER_BASE},
+                                                        {_playerView.myId, MELEE_BASE},
+                                                        {_playerView.myId, RANGED_BASE},
+                                                        {_playerView.myId, HOUSE}});
     
+    const auto isBuildingActive = [this](const EntityIndex entityIndex)
+    {
+        return _playerView.entities[entityIndex].active;
+    };
     
-    const auto populationProvide = currentBuildingsCount * 5;
+    const auto activeBuildings = std::count_if(currentBuildings.begin(),
+                                               currentBuildings.end(),
+                                               isBuildingActive);
+    
+    auto populationProvide = activeBuildings * 5;
     const auto populationUse = currentUnitsCount;
     
     if (populationUse + 1 >= populationProvide)

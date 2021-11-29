@@ -6,11 +6,13 @@ RangedUnitStrategy::RangedUnitStrategy(const EntityIndex unitIndex,
                                        const PlayerView& playerView,
                                        const EntityManager& entityManager,
                                        const FocusAttackManager& focusAttackManager,
+                                       const SquadManager& squadManager,
                                        AttackActionObserversList&& attackObservers)
     : _unitIndex{unitIndex}
     , _playerView{playerView}
     , _entityManager{entityManager}
     , _focusAttackManager{focusAttackManager}
+    , _squadManager{squadManager}
     , _attackObservers{std::move(attackObservers)}
 {
     const EntityDetector entityDetector{_playerView, _entityManager};
@@ -63,23 +65,93 @@ std::unique_ptr<AttackAction> RangedUnitStrategy::generateAttackAction() const
 
 std::unique_ptr<MoveAction> RangedUnitStrategy::generateMoveAction() const
 {
-    Vec2Int target;
     if (_isInDanger)
     {
-        target = {0, 0};
+        const auto& baseIndixes = _entityManager.getEntities({_playerView.myId, BUILDER_BASE});
+        if (!baseIndixes.empty())
+        {
+            const auto base = _playerView.entities[baseIndixes[0]];
+            return std::make_unique<MoveAction>(base.position, true, false);
+        }
     }
-    else
+ 
+    const auto enemyID = _playerView.players.at(0).id != _playerView.myId ? _playerView.players.at(0).id
+                                                                          : _playerView.players.at(1).id;
+    
+    const auto& unit = _playerView.entities.at(_unitIndex);
+    if (_squadManager.isDefender(unit.id))
     {
-        target = Vec2Int{30, 30};
+        const auto enemies = _entityManager.getEntities({{enemyID, MELEE_UNIT},
+                                                         {enemyID, RANGED_UNIT}});
+        
+        if (enemies.empty())
+        {
+            return;
+        }
+        
+        const auto baseIndixes = _entityManager.getEntities({_playerView.myId, BUILDER_BASE});
+        const auto basePosition =  baseIndixes.empty() ? _playerView.entities[baseIndixes[0]].position
+                                                       : Vec2Int{0, 0};
+        
+        Vec2Int closestEnemyPosition{0, 0};
+        auto minDistance = SIZE_T_MAX;
+        
+        for (const auto enemyIndex : enemies)
+        {
+            const auto& enemy = _playerView.entities[enemyIndex];
+            
+            const auto distanceX = std::abs(basePosition.x - enemy.position.x);
+            const auto distanceY = std::abs(basePosition.y - enemy.position.y);
+            const auto actualDistance = distanceX + distanceY;
+            
+            if (actualDistance < minDistance)
+            {
+                minDistance = actualDistance;
+                closestEnemyPosition = enemy.position;
+            }
+        }
+        
+        return std::make_unique<MoveAction>(closestEnemyPosition, true, true);
     }
     
-    const auto findClosestPosition = true;
-    const auto breakThrough = true;
+    if (_squadManager.isSaboteur(unit.id))
+    {
+        const auto baseIndices = _entityManager.getEntities({_playerView.myId, BUILDER_BASE});
+        const auto enemyBaseIndices = _entityManager.getEntities({enemyID, BUILDER_BASE});
+        
+        if (baseIndices.empty() || enemyBaseIndices.empty())
+        {
+            return std::make_unique<MoveAction>(Vec2Int{30, 30}, true, true);
+        }
+        
+        const auto basePosition = _playerView.entities[baseIndices[0]].position;
+        const auto enemyBasePosition = _playerView.entities[enemyBaseIndices[0]].position;
+        
+        if (enemyBasePosition.x > basePosition.x)
+        {
+            const auto target = unit.position.y < (_playerView.mapSize - 3) ? Vec2Int{unit.position.x, unit.position.y + 1}
+                                                                            : Vec2Int{unit.position.x + 1, unit.position.y};
+            
+            return std::make_unique<MoveAction>(std::move(target), true, true);
+        }
+        else
+        {
+            const auto target = unit.position.y > 3 ? Vec2Int{unit.position.x, unit.position.y - 1}
+                                                    : Vec2Int{unit.position.x - 1, unit.position.y};
+            
+            return std::make_unique<MoveAction>(std::move(target), true, true);
+        }
+    }
     
-    return std::make_unique<MoveAction>(std::move(target), findClosestPosition, breakThrough);
+    return std::make_unique<MoveAction>(Vec2Int{30, 30}, true, true);
 }
 
 std::unique_ptr<BuildAction> RangedUnitStrategy::generateBuildAction() const
+{
+    return nullptr;
+}
+
+std::unique_ptr<RepairAction> RangedUnitStrategy::generateRepairAction() const
 {
     return nullptr;
 }
