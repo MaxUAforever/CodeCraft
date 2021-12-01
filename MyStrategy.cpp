@@ -86,7 +86,7 @@ Action MyStrategy::getAction(const PlayerView& playerView, DebugInterface* debug
                 const auto alliasBuildersCount = entityManager.getEntities({playerView.myId, BUILDER_UNIT}).size();
                 const auto enemyBuildersCount = entityManager.getEntities({enemyID, BUILDER_UNIT}).size();
                 
-                if (alliasBuildersCount > enemyBuildersCount && alliasBuildersCount > (populationProvide * 0.2))
+                if (alliasBuildersCount > enemyBuildersCount && alliasBuildersCount > (populationProvide * 0.2 + 5))
                 {
                     result.entityActions[entity.id] = EntityAction(nullptr, nullptr, nullptr, nullptr);
                     continue;
@@ -97,7 +97,7 @@ Action MyStrategy::getAction(const PlayerView& playerView, DebugInterface* debug
             {
                 const auto alliasRangesCount = entityManager.getEntities({playerView.myId, RANGED_UNIT}).size();
                 
-                if (alliasRangesCount > (populationProvide * 0.8))
+                if (alliasRangesCount > (populationProvide * 0.8 - 5))
                 {
                     result.entityActions[entity.id] = EntityAction(nullptr, nullptr, nullptr, nullptr);
                     continue;
@@ -105,10 +105,18 @@ Action MyStrategy::getAction(const PlayerView& playerView, DebugInterface* debug
             }
             
             auto entityTypeToBuild = properties.build->options[0];
-            Vec2Int position{entity.position.x + properties.size, entity.position.y + properties.size - 1};
+            Vec2Int position{entity.position.x + properties.size - 1, entity.position.y + properties.size};
 
             auto buildAction = std::make_unique<BuildAction>(entityTypeToBuild, std::move(position));
             result.entityActions[entity.id] = EntityAction(nullptr, std::move(buildAction), nullptr, nullptr);
+        }
+        else if (entity.entityType == TURRET)
+        {
+            const auto& properties = playerView.entityProperties.at(TURRET);
+            auto autoAttackAction = std::make_unique<AutoAttack>(properties.sightRange, std::vector<EntityType>{});
+            
+            auto attackAction = std::make_unique<AttackAction>(nullptr, std::move(autoAttackAction));
+            result.entityActions[entity.id] = EntityAction(nullptr, nullptr, std::move(attackAction), nullptr);
         }
     }
     

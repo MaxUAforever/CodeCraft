@@ -8,7 +8,13 @@ namespace
 {
 size_t getUnitTypeAttackPriority(const EntityType entityType)
 {
-    static const std::unordered_map<EntityType, size_t> PriorityType{{RANGED_UNIT, 0}, {BUILDER_UNIT, 1}, {MELEE_UNIT, 2}};
+    static const std::unordered_map<EntityType, size_t> PriorityType{{RANGED_UNIT, 0},
+                                                                     {BUILDER_UNIT, 1},
+                                                                     {TURRET, 2},
+                                                                     {BUILDER_BASE, 3},
+                                                                     {RANGED_BASE, 4},
+                                                                     {MELEE_BASE, 5},
+                                                                     {MELEE_UNIT, 6}};
     
     const auto priorityIt = PriorityType.find(entityType);
     if (priorityIt == PriorityType.cend())
@@ -28,7 +34,13 @@ FocusAttackManager::FocusAttackManager(const PlayerView& playerView, const Entit
     const EntityDetector entityDetector{playerView, entityManager};
     for (const auto unitIndex : rangedUnits)
     {
-        auto enemies = entityDetector.getEnemiesInEntityRange(unitIndex, {BUILDER_UNIT, MELEE_UNIT, RANGED_UNIT});
+        auto enemies = entityDetector.getEnemiesInEntityRange(unitIndex, {BUILDER_UNIT,
+                                                                          MELEE_UNIT,
+                                                                          RANGED_UNIT,
+                                                                          TURRET,
+                                                                          BUILDER_BASE,
+                                                                          MELEE_BASE,
+                                                                          RANGED_BASE});
         
         for (const auto enemyIndex : enemies)
         {

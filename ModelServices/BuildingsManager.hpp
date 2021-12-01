@@ -26,11 +26,13 @@ public:
 private:
     std::unordered_set<Vec2Int> getObstaclesMap(const MapRange& rangeForBuild) const;
     
+    bool isBuildingAlive(const EntityType buildingType) const;
+    
 private:
     const PlayerView& _playerView;
     const EntityManager& _entityManager;
     
-    std::optional<EntityIndex> _builder;
+    std::vector<EntityIndex> _builder;
 };
 
 #endif /* BuildingsManager_hpp */

@@ -22,7 +22,7 @@ std::unique_ptr<IUnitStrategy> UnitStrategyFactory::create(const EntityIndex uni
     switch(unit.entityType)
     {
         case EntityType::BUILDER_UNIT:
-            return std::make_unique<BuilderUnitStrategy>(unitIndex, playerView, entityManager, buildingsManager);
+            return std::make_unique<BuilderUnitStrategy>(unitIndex, playerView, entityManager, buildingsManager, squadManager);
         case EntityType::MELEE_UNIT:
             return std::make_unique<MeleeUnitStrategy>(unit, playerView);
         case EntityType::RANGED_UNIT:

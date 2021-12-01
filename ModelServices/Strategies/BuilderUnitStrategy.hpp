@@ -5,6 +5,7 @@
 
 #include "../BuildingsManager.hpp"
 #include "../EntityManager.hpp"
+#include "../SquadManager.hpp"
 
 #include "../../model/Model.hpp"
 
@@ -20,7 +21,8 @@ public:
     BuilderUnitStrategy(const EntityIndex unitIndex,
                         const PlayerView& playerView,
                         const EntityManager& entityManager,
-                        const BuildingsManager& buildingsManager);
+                        const BuildingsManager& buildingsManager,
+                        const SquadManager& squadManager);
     
     std::unique_ptr<AttackAction> generateAttackAction() const override;
     std::unique_ptr<BuildAction> generateBuildAction() const override;
@@ -37,6 +39,7 @@ private:
 private:
     const PlayerView& _playerView;
     const EntityManager& _entityManager;
+    const SquadManager& _squadManager;
     
     const EntityIndex _unitIndex;
     std::vector<EntityIndex> _enemyUnits;

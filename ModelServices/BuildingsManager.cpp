@@ -5,16 +5,18 @@
 BuildingsManager::BuildingsManager(const PlayerView& playerView, const EntityManager& entityManager)
     : _playerView{playerView}
     , _entityManager{entityManager}
-{
-    const auto& builders = entityManager.getEntities({playerView.myId, BUILDER_UNIT});
-    _builder = builders.size() < 2 ? std::nullopt : std::make_optional(builders[0]);
-}
+{}
 
 std::optional<EntityType> BuildingsManager::getTypeToBuild(const EntityIndex unitIndex) const
 {
-    if (_builder != unitIndex)
+    if (!isBuildingAlive(BUILDER_BASE))
     {
-        return std::nullopt;
+        return BUILDER_BASE;
+    }
+    
+    if (!isBuildingAlive(RANGED_BASE))
+    {
+        return RANGED_BASE;
     }
     
     const auto& unitBaseProperties = _playerView.entityProperties.at(RANGED_BASE);
@@ -47,7 +49,14 @@ std::optional<EntityType> BuildingsManager::getTypeToBuild(const EntityIndex uni
     return std::nullopt;
 }
 
-bool BuildingsManager::isEntityBuilder(const EntityIndex unitIndex) const
+bool BuildingsManager::isBuildingAlive(const EntityType buildingType) const
 {
-    return unitIndex == _builder;
+    const auto buildings = _entityManager.getEntities({_playerView.myId, buildingType});
+    if (buildings.empty())
+    {
+        return false;
+    }
+    
+    const auto& building = _playerView.entities[buildings[0]];
+    return building.active;
 }

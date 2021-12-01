@@ -5,10 +5,12 @@
 BuilderUnitStrategy::BuilderUnitStrategy(const EntityIndex unitIndex,
                                          const PlayerView& playerView,
                                          const EntityManager& entityManager,
-                                         const BuildingsManager& buildingsManager)
+                                         const BuildingsManager& buildingsManager,
+                                         const SquadManager& squadManager)
     : _playerView{playerView}
     , _entityManager{entityManager}
     , _unitIndex{unitIndex}
+    , _squadManager{squadManager}
 {
     const auto enemyID = playerView.players.at(0).id != playerView.myId ? playerView.players.at(0).id
                                                                         : playerView.players.at(1).id;
@@ -24,11 +26,17 @@ BuilderUnitStrategy::BuilderUnitStrategy(const EntityIndex unitIndex,
     _enemyUnits.insert(_enemyUnits.end(), std::make_move_iterator(meleeUnitsNearby.begin()),
                        std::make_move_iterator(meleeUnitsNearby.end()));
     
+    if (_squadManager.isBuilder(unit.id))
+    {
+        const auto typeToBuild = buildingsManager.getTypeToBuild(_unitIndex);
+        const auto buildPoint = typeToBuild ? calculateBuildPoint(*typeToBuild) : std::nullopt;
     
-    const auto typeToBuild = buildingsManager.getTypeToBuild(_unitIndex);
-    const auto buildPoint = typeToBuild ? calculateBuildPoint(*typeToBuild) : std::nullopt;
-    
-    _buildInfo = typeToBuild && buildPoint ? std::make_optional<BuildInfo>({*typeToBuild, *buildPoint}) : std::nullopt;
+        _buildInfo = typeToBuild && buildPoint ? std::make_optional<BuildInfo>({*typeToBuild, *buildPoint}) : std::nullopt;
+    }
+    else
+    {
+        _buildInfo = std::nullopt;
+    }
 }
 
 std::unique_ptr<AttackAction> BuilderUnitStrategy::generateAttackAction() const
@@ -54,13 +62,34 @@ std::unique_ptr<MoveAction> BuilderUnitStrategy::generateMoveAction() const
     
     if (_buildInfo)
     {
+        const auto& unit = _playerView.entities[_unitIndex];
+        
         const auto& buildingProperties = _playerView.entityProperties.at(_buildInfo->buildType);
         const int buildingMiddle = (buildingProperties.size / 2);
         
+        if (const auto& builingIndex = getInactiveBuilding(_buildInfo->buildType))
+        {
+            const auto& building = _playerView.entities[*builingIndex];
+            const Vec2Int target{building.position.x + buildingMiddle, building.position.y + buildingMiddle};
+            
+            const MapRange rangeForRepairing{_playerView, target, static_cast<size_t>(buildingMiddle + 1)};
+            
+            const auto distanceX = std::abs(target.x - unit.position.x);
+            const auto distanceY = std::abs(target.y - unit.position.y);
+            const auto actualDistance = distanceX + distanceY;
+            
+            const auto isOnXSide = distanceX == (buildingMiddle + 1) && distanceY < (buildingMiddle + 1);
+            const auto isOnYSide = distanceY == (buildingMiddle + 1) && distanceX < (buildingMiddle + 1);
+            if (isOnXSide || isOnYSide)
+            {
+                return nullptr;
+            }
+            
+            return std::make_unique<MoveAction>(std::move(target), true, false);
+        }
+        
         const Vec2Int target{_buildInfo->buildPoint.x + buildingMiddle, _buildInfo->buildPoint.y + buildingMiddle};
         const MapRange rangeForBuild{_playerView, target, static_cast<size_t>(buildingMiddle + 1)};
-        
-        const auto& unit = _playerView.entities[_unitIndex];
         
         if (rangeForBuild.contains(unit.position))
         {
@@ -229,7 +258,8 @@ std::optional<Vec2Int> BuilderUnitStrategy::calculateBuildPoint(const EntityType
             return Vec2Int{buildPoint.x, buildPoint.y};
         }
         
-        buildPoint.x += buildingProperties.size + 1;
+        const auto offset = buildPoint.y == 0 ? 0 : 1;
+        buildPoint.x += buildingProperties.size + offset;
     }
     
     return std::nullopt;

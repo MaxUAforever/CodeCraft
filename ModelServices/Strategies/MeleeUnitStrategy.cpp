@@ -15,7 +15,7 @@ std::unique_ptr<AttackAction> MeleeUnitStrategy::generateAttackAction() const
 
 std::unique_ptr<MoveAction> MeleeUnitStrategy::generateMoveAction() const
 {
-    Vec2Int target{_playerView.mapSize - 1, _playerView.mapSize - 1};
+    Vec2Int target{_playerView.mapSize - 15, _playerView.mapSize - 15};
     const auto findClosestPosition = true;
     const auto breakThrough = true;
     
