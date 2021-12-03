@@ -103,10 +103,9 @@ std::unique_ptr<MoveAction> RangedUnitStrategy::generateMoveAction() const
         const auto range = _squadManager.isLeftDefender(unit.id) ? leftSide : rightSide;
         
         const auto enemies = entityDetector.getInRange(range, enemyID, {MELEE_UNIT, RANGED_UNIT});
-        
         if (enemies.empty())
         {
-            return;
+            return std::make_unique<MoveAction>(Vec2Int{_playerView.mapSize - 1, _playerView.mapSize - 1}, true, true);;
         }
         
         Vec2Int closestEnemyPosition{_playerView.mapSize, _playerView.mapSize};
@@ -139,8 +138,24 @@ std::unique_ptr<MoveAction> RangedUnitStrategy::generateMoveAction() const
     
     if (_squadManager.isSaboteur(unit.id))
     {
-        const auto target = unit.position.y < (_playerView.mapSize - 3) ? Vec2Int{unit.position.x, unit.position.y + 1}
-                                                                        : Vec2Int{unit.position.x + 1, unit.position.y};
+        Vec2Int target;
+        if (unit.position.x > (_playerView.mapSize - 15) && unit.position.y > (_playerView.mapSize - 15))
+        {
+            const auto enemyBuilderBases = _entityManager.getEntities({{enemyID, BUILDER_BASE},
+                                                                       {enemyID, RANGED_BASE},
+                                                                       {enemyID, MELEE_BASE}});
+            
+            target = enemyBuilderBases.empty() ? Vec2Int{_playerView.mapSize - 15, _playerView.mapSize - 15}
+                                                : _playerView.entities[enemyBuilderBases[0]].position;
+        }
+        else if (unit.position.y > _playerView.mapSize - 3)
+        {
+            target = {unit.position.x + 1, unit.position.y};
+        }
+        else
+        {
+            target = {unit.position.x, unit.position.y + 1};
+        }
             
         return std::make_unique<MoveAction>(std::move(target), true, true);
     }
@@ -166,7 +181,7 @@ std::unique_ptr<MoveAction> RangedUnitStrategy::generateMoveAction() const
         return nullptr;
     }
     
-    return std::make_unique<MoveAction>(Vec2Int{_playerView.mapSize, _playerView.mapSize}, true, true);
+    return std::make_unique<MoveAction>(Vec2Int{_playerView.mapSize - 1, _playerView.mapSize - 1}, true, true);
 }
 
 std::unique_ptr<BuildAction> RangedUnitStrategy::generateBuildAction() const

@@ -28,7 +28,7 @@ void SquadManager::update(const PlayerView& playerView, const EntityManager& ent
     updateBuilders(playerView, entityManager);
     updatePushers(playerView, entityManager);
     updateDefenders(playerView, entityManager);
-    //updateSaboteurs(playerView, entityManager);
+    updateSaboteurs(playerView, entityManager);
 }
 
 void SquadManager::updateBuilders(const PlayerView& playerView, const EntityManager& entityManager)

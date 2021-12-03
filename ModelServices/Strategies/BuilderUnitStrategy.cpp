@@ -197,14 +197,14 @@ Vec2Int BuilderUnitStrategy::calcuateAvoidEnemiesPoint() const
     const auto& unit = _playerView.entities[_unitIndex];
     
     Vec2Int target = unit.position;
-    for (auto unitIndex : _enemyUnits)
+    for (auto enemyIndex : _enemyUnits)
     {
-        if (unitIndex >= _playerView.entities.size())
+        if (enemyIndex >= _playerView.entities.size())
         {
             continue;
         }
         
-        const auto& enemyUnit = _playerView.entities[unitIndex];
+        const auto& enemyUnit = _playerView.entities[enemyIndex];
         
         target.x += unit.position.x - enemyUnit.position.x;
         target.y += unit.position.y - enemyUnit.position.y;
